@@ -10,7 +10,7 @@ const char pass[] = "PASS";   // your network password
 // NTP settings
 #define LOCAL_NTP_PORT 2390
 const char* ntpServerName = "ntp.example.com"; // NTP server hostname - see http://www.pool.ntp.org/en/vendors.html
-#define NTP_INTERVAL 64  // seconds between polling the NTP server - check with your ntp operator before lowering this
+#define NTP_INTERVAL 1024  // seconds between polling the NTP server - check with your ntp operator before lowering this
 
 IPAddress timeServerIP;
 NTPClient ntp;
