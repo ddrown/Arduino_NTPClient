@@ -1,0 +1,22 @@
+{
+"name": "NTP Client",
+"frameworks": "Arduino",
+"keywords": "NTP",
+"description": "This is a NTP client that depends on ESP8266 wifi",
+"url": "https://github.com/ddrown/Arduino_NTPClient",
+"authors":
+[
+{
+        "name": "mmuecke on github?"
+},
+{
+        "name": "Daniel Drown"
+}
+],
+"repository":
+{
+    "type": "git",
+    "url": "https://github.com/ddrown/Arduino_NTPClient"
+}
+}
+
