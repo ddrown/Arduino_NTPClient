@@ -63,13 +63,13 @@ void NTPClient::sendNTPpacket(IPAddress& address) {
 PollStatus NTPClient::poll_reply(bool ActuallySetTime) {
   int rec_length;
 
+  if(millis()-sent > 800) { // TODO: allow changing the timeout parameter?
+    return NTP_TIMEOUT;
+  }
+
   rec_length = udp.parsePacket();
   if(rec_length == 0) {
     return NTP_NO_PACKET;
-  }
-
-  if(millis()-sent > 800) { // TODO: allow changing the timeout parameter?
-    return NTP_TIMEOUT;
   }
 
   if(rec_length != NTP_PACKET_SIZE) {
