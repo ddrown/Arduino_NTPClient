@@ -17,12 +17,13 @@ void NTPClient::begin(int localNTPPort) {
 }
 
 // TODO: handle kiss of death
-// TODO: delay/dispersion, stratum, version, mode
+// TODO: verify delay/dispersion, stratum, version, mode
+// TODO: verify upstream sync status
 void NTPClient::parse_ntp(byte *ResponseBuffer, bool ActuallySetTime) {
   struct ntp_packet *response = (struct ntp_packet *)ResponseBuffer;
   struct timems local_ts;
 
-  // Unix time starts on Jan 1 1970. In seconds, that's 2208988800:
+  // Unix time starts on Jan 1 1970. In NTP seconds, that's 2208988800:
   const unsigned long seventyYears = 2208988800UL;
   // subtract seventy years:
   uint32_t epoch = NTOHL(response->trans_time) - seventyYears;
@@ -32,9 +33,11 @@ void NTPClient::parse_ntp(byte *ResponseBuffer, bool ActuallySetTime) {
     local_ts.tv_msec = epoch_ms;
     setTime_ms(&local_ts);
   }
-  now_ms(&local_ts);
-  // TODO: consider RTT in offset calculation?
-  lastOffset = (epoch - local_ts.tv_sec) * 1000 + (epoch_ms - local_ts.tv_msec);
+  now_ms(&lastLocalTS);
+
+  lastRemoteTS.tv_sec = epoch;
+  lastRemoteTS.tv_msec = epoch_ms;
+  lastRemoteTS.raw_millis = lastLocalTS.raw_millis - (received - sent)/2;
 }
 
 void NTPClient::sendNTPpacket(IPAddress& address) {
@@ -45,11 +48,12 @@ void NTPClient::sendNTPpacket(IPAddress& address) {
   // Initialize values needed to form NTP request
   // (see URL above for details on the packets)
   request->byte1 = 0b11100011;   // LI=unsync, Version=4, Mode=3(client)
-  request->stratum = 0; // 0 - unspecified or invalid
-  request->poll = 6; // interval in 2^x seconds
+  request->stratum = 0; // TODO: 0 - unspecified or invalid
+  request->poll = 6; // TODO: interval in 2^x seconds
   request->precision = -10;  // Peer Clock Precision in 2^x seconds
   // 8 bytes of zero for Root Delay & Root Dispersion
-  request->ident = 827207988; // 52.49.78.49
+  request->ident = 827207988; // TODO: 52.49.78.49
+  // TODO: set ref_time / trans_time?
 
   // all NTP fields have been given values, now
   // you can send a packet requesting a timestamp:
@@ -84,9 +88,20 @@ PollStatus NTPClient::poll_reply(bool ActuallySetTime) {
 }
 
 int32_t NTPClient::getLastOffset() {
-  return lastOffset;
+  return (lastRemoteTS.tv_sec - lastLocalTS.tv_sec) * 1000 +
+         (lastRemoteTS.tv_msec - lastLocalTS.tv_msec);
 }
 
 uint32_t NTPClient::getLastRTT() {
   return received - sent;
+}
+
+int32_t NTPClient::getLastOffset_RTT() {
+  return getLastOffset() - getLastRTT()/2;
+}
+
+void NTPClient::getRemoteTS(struct timems *ts) {
+  ts->tv_sec = lastRemoteTS.tv_sec;
+  ts->tv_msec = lastRemoteTS.tv_msec;
+  ts->raw_millis = lastRemoteTS.raw_millis;
 }

@@ -4,6 +4,7 @@
 #include "Arduino.h"
 //#include <inttypes.h>
 #include <WiFiUdp.h>
+#include <Clock.h>
 
 extern "C" {
   struct ntp_packet {
@@ -42,12 +43,15 @@ class NTPClient {
     void sendNTPpacket(IPAddress& address);
     PollStatus poll_reply(bool ActuallySetTime);
     int32_t getLastOffset();
+    int32_t getLastOffset_RTT();
     uint32_t getLastRTT();
+    void getRemoteTS(struct timems *ts);
   
   private:
     WiFiUDP udp;
     uint32_t sent, received;
-    int32_t lastOffset;
+    struct timems lastRemoteTS, lastLocalTS;
+
     byte packetBuffer[NTP_PACKET_SIZE]; //buffer to hold incoming and outgoing packets
 
     void parse_ntp(byte *ResponseBuffer, bool ActuallySetTime);
